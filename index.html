@@ -1562,7 +1562,7 @@
             margin-bottom: 15px;
         }
         .filter-panel.open {
-            max-height: 1000px;
+            max-height: 9999px;
             padding: 15px;
         }
 
@@ -1689,15 +1689,18 @@
             aspect-ratio: 1 / 1;
             margin: 0 auto;
             display: block;
+            min-height: 200px;
         }
         #skinCanvas {
             width: 100%; height: 100%;
             display: block;
             cursor: grab;
-            background: white;
+            background: transparent;
             border: var(--border-thickness) solid #1e1e1f;
             box-shadow: 0px 6px 0px 0px #1e1e1f;
-            position: relative;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
             z-index: 1;
         }
         #filterOverlayCanvas {
@@ -1725,6 +1728,45 @@
             pointer-events: none;
             z-index: 4;
         }
+        /* BG-only effect canvas (behind skinCanvas) */
+        #bgEffectCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            display: block;
+        }
+        /* Effect button wrap: effect btn + bg-only mini toggle stacked */
+        .effect-btn-wrap {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 2px;
+            align-items: stretch;
+        }
+        .bg-only-toggle {
+            background: #1a1a1b;
+            border: 1px solid #333;
+            color: #555;
+            font-family: 'Minecraft', monospace;
+            font-size: 7px;
+            letter-spacing: 1px;
+            padding: 2px 4px;
+            cursor: pointer;
+            text-align: center;
+            line-height: 1.4;
+            transition: 0.08s linear;
+            user-select: none;
+        }
+        .bg-only-toggle::before { content: '○ '; }
+        .bg-only-toggle.on {
+            background: #0d1f0d;
+            border-color: #3c8527;
+            color: #8bc34a;
+            box-shadow: 0 0 5px rgba(60,133,39,0.5);
+        }
+        .bg-only-toggle.on::before { content: '● '; }
+        .bg-only-toggle:active { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -1824,7 +1866,7 @@
         <div class="container">
             <header><h1><span class="material-symbols-outlined">stadia_controller</span> <span id="mainTitle">MINECRAFT SKIN 3D HEAD VIEWER</span></h1><p id="mainSub">Button Rename | iro.js | Pixel Outline | Shop | Chat | Voice Msg | Voice Chat</p></header>
             <main>
-                <div class="viewer-container"><div class="canvas-stack"><canvas id="skinCanvas"></canvas><canvas id="filterOverlayCanvas"></canvas></div></div>
+                <div class="viewer-container"><div class="canvas-stack"><canvas id="bgEffectCanvas"></canvas><canvas id="skinCanvas"></canvas><canvas id="filterOverlayCanvas"></canvas></div></div>
                 <div class="control-panel">
                     <!-- ===== HEAD FILTER PANEL ===== -->
                     <button class="filter-toggle-btn" id="filterToggleBtn">
@@ -1905,21 +1947,36 @@
                         <!-- Canvas Overlay Effects -->
                         <div class="filter-section-title"><span class="material-symbols-outlined" style="font-size:13px;color:var(--ui-accent);">layers</span> Overlay Effects</div>
                         <div class="filter-toggle-row">
-                            <button class="filter-option-btn" id="fVignetteBtn" data-active="false">
-                                <span class="material-symbols-outlined">vignette</span> Vignette
-                            </button>
-                            <button class="filter-option-btn" id="fGlowBtn" data-active="false">
-                                <span class="material-symbols-outlined">flare</span> Glow
-                            </button>
-                            <button class="filter-option-btn" id="fScanlineBtn" data-active="false">
-                                <span class="material-symbols-outlined">view_stream</span> Scanlines
-                            </button>
-                            <button class="filter-option-btn" id="fNoiseBtn" data-active="false">
-                                <span class="material-symbols-outlined">grain</span> Film Noise
-                            </button>
-                            <button class="filter-option-btn" id="fPixelBtn" data-active="false">
-                                <span class="material-symbols-outlined">grid_on</span> Pixelate
-                            </button>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fVignetteBtn" data-active="false">
+                                    <span class="material-symbols-outlined">vignette</span> Vignette
+                                </button>
+                                <button class="bg-only-toggle" id="fVignetteBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fGlowBtn" data-active="false">
+                                    <span class="material-symbols-outlined">flare</span> Glow
+                                </button>
+                                <button class="bg-only-toggle" id="fGlowBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fScanlineBtn" data-active="false">
+                                    <span class="material-symbols-outlined">view_stream</span> Scanlines
+                                </button>
+                                <button class="bg-only-toggle" id="fScanlineBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fNoiseBtn" data-active="false">
+                                    <span class="material-symbols-outlined">grain</span> Film Noise
+                                </button>
+                                <button class="bg-only-toggle" id="fNoiseBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fPixelBtn" data-active="false">
+                                    <span class="material-symbols-outlined">grid_on</span> Pixelate
+                                </button>
+                                <button class="bg-only-toggle" id="fPixelBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
                         </div>
 
                         <!-- Vignette Controls -->
@@ -1968,39 +2025,72 @@
                         <!-- ===== SPECIAL EFFECTS (11 ခု) ===== -->
                         <div class="filter-section-title"><span class="material-symbols-outlined" style="font-size:13px;color:#ff9800;">auto_fix_normal</span> Special Effects</div>
                         <div class="filter-toggle-row" style="flex-wrap:wrap;">
-                            <button class="filter-option-btn" id="fUnsharpBtn" data-active="false">
-                                <span class="material-symbols-outlined">shutter_speed</span> Unsharp Mask
-                            </button>
-                            <button class="filter-option-btn" id="fStainedGlassBtn" data-active="false">
-                                <span class="material-symbols-outlined">window</span> Stained Glass
-                            </button>
-                            <button class="filter-option-btn" id="fWetEdgeBtn" data-active="false">
-                                <span class="material-symbols-outlined">water_drop</span> Wet Edge
-                            </button>
-                            <button class="filter-option-btn" id="fParallelGradBtn" data-active="false">
-                                <span class="material-symbols-outlined">gradient</span> Parallel Grad
-                            </button>
-                            <button class="filter-option-btn" id="fAnimeBgBtn" data-active="false">
-                                <span class="material-symbols-outlined">star</span> Anime BG
-                            </button>
-                            <button class="filter-option-btn" id="fMangaBgBtn" data-active="false">
-                                <span class="material-symbols-outlined">format_list_bulleted</span> Manga BG
-                            </button>
-                            <button class="filter-option-btn" id="fBloomBtn" data-active="false">
-                                <span class="material-symbols-outlined">wb_iridescent</span> Bloom
-                            </button>
-                            <button class="filter-option-btn" id="fSheerCrossBtn" data-active="false">
-                                <span class="material-symbols-outlined">add</span> Sheer Cross
-                            </button>
-                            <button class="filter-option-btn" id="fExpansionBtn" data-active="false">
-                                <span class="material-symbols-outlined">open_in_full</span> Expansion
-                            </button>
-                            <button class="filter-option-btn" id="fBlurFrameBtn" data-active="false">
-                                <span class="material-symbols-outlined">blur_circular</span> Blur Frame
-                            </button>
-                            <button class="filter-option-btn" id="fRainBtn" data-active="false">
-                                <span class="material-symbols-outlined">rainy</span> Rain
-                            </button>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fUnsharpBtn" data-active="false">
+                                    <span class="material-symbols-outlined">shutter_speed</span> Unsharp Mask
+                                </button>
+                                <button class="bg-only-toggle" id="fUnsharpBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fStainedGlassBtn" data-active="false">
+                                    <span class="material-symbols-outlined">window</span> Stained Glass
+                                </button>
+                                <button class="bg-only-toggle" id="fStainedGlassBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fWetEdgeBtn" data-active="false">
+                                    <span class="material-symbols-outlined">water_drop</span> Wet Edge
+                                </button>
+                                <button class="bg-only-toggle" id="fWetEdgeBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fParallelGradBtn" data-active="false">
+                                    <span class="material-symbols-outlined">gradient</span> Parallel Grad
+                                </button>
+                                <button class="bg-only-toggle" id="fParallelGradBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fAnimeBgBtn" data-active="false">
+                                    <span class="material-symbols-outlined">star</span> Anime BG
+                                </button>
+                                <button class="bg-only-toggle" id="fAnimeBgBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fMangaBgBtn" data-active="false">
+                                    <span class="material-symbols-outlined">format_list_bulleted</span> Manga BG
+                                </button>
+                                <button class="bg-only-toggle" id="fMangaBgBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fBloomBtn" data-active="false">
+                                    <span class="material-symbols-outlined">wb_iridescent</span> Bloom
+                                </button>
+                                <button class="bg-only-toggle" id="fBloomBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fSheerCrossBtn" data-active="false">
+                                    <span class="material-symbols-outlined">add</span> Sheer Cross
+                                </button>
+                                <button class="bg-only-toggle" id="fSheerCrossBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fExpansionBtn" data-active="false">
+                                    <span class="material-symbols-outlined">open_in_full</span> Expansion
+                                </button>
+                                <button class="bg-only-toggle" id="fExpansionBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fBlurFrameBtn" data-active="false">
+                                    <span class="material-symbols-outlined">blur_circular</span> Blur Frame
+                                </button>
+                                <button class="bg-only-toggle" id="fBlurFrameBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
+                            <div class="effect-btn-wrap">
+                                <button class="filter-option-btn" id="fRainBtn" data-active="false">
+                                    <span class="material-symbols-outlined">rainy</span> Rain
+                                </button>
+                                <button class="bg-only-toggle" id="fRainBgOnly" title="BG Only Mode">BG ONLY</button>
+                            </div>
                         </div>
 
                         <!-- Unsharp Mask Controls -->
@@ -3908,6 +3998,16 @@ hatBottom.map.rotation = Math.PI;
             function rgbToHex(r,g,b){ return '#'+[r,g,b].map(x=>Math.min(255,Math.max(0,Math.round(x))).toString(16).padStart(2,'0')).join(''); }
             function hexToRgb(hex){ let h=hex.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); if(h.length!==6) return null; return{ r:parseInt(h.substring(0,2),16), g:parseInt(h.substring(2,4),16), b:parseInt(h.substring(4,6),16) }; }
             function setBackgroundColor(color){ renderer.setClearColor(color,1); stickerDirty=true; document.getElementById('bgColorPicker').value=color; document.getElementById('bgValue').innerText=color; document.getElementById('hexInput').value=color; currentIroColor=color; const rgb=hexToRgb(color); if(rgb){ document.getElementById('rInput').value=rgb.r; document.getElementById('gInput').value=rgb.g; document.getElementById('bInput').value=rgb.b; } }
+            // Expose renderer controls for bg-only filter mode
+            window._mcRendererRef = renderer;
+            window._mcGetBgColor = () => document.getElementById('bgColorPicker')?.value || '#ffffff';
+            // Patch setBackgroundColor so bgEffectCanvas stays in sync
+            const _origSetBgColor = setBackgroundColor;
+            window._mcSetBgColorHook = null;
+            setBackgroundColor = function(color){
+                _origSetBgColor(color);
+                if(window._mcSetBgColorHook) window._mcSetBgColorHook(color);
+            };
             function loadSkinFile(file){ if(!file||!file.type.match('image/png')) return alert("PNG ဖိုင်သာရွေးပါ"); const reader=new FileReader(); reader.onload=e=>{ currentSkinDataURL=e.target.result; const img=new Image(); img.onload=()=>{ const valid=(img.width===64&&(img.height===64||img.height===32))||(img.width===32&&img.height===32); if(!valid){ alert("မှန်ကန်တဲ့ Minecraft skin မဟုတ်ပါ"); return; } window._lastSkinImgRef=img; if(window._rebuildScene){ window._rebuildScene(img); } else { const texture=new THREE.CanvasTexture(img); texture.magFilter=THREE.NearestFilter; texture.minFilter=THREE.NearestFilter; if(headGroup) scene3d.remove(headGroup); headGroup=buildMinecraftHeadFromImage(img,texture); scene3d.add(headGroup); updateOutline(); } const hasHat=(img.width===64&&img.height===64); if(statusEl) statusEl.innerHTML=`✅ ${file.name} (${img.width}x${img.height})${hasHat?' - Hat Available':''}`; const toggleHat=document.getElementById('toggleHatBtn'); if(toggleHat){ toggleHat.disabled=!hasHat; toggleHat.style.opacity=hasHat?'1':'0.5'; if(!hasHat) hatEnabled=false; } if(hatBadge) hatBadge.innerHTML=hatEnabled?'🎩 ON':'🎩 OFF'; }; img.src=currentSkinDataURL; }; reader.readAsDataURL(file); }
             currentSkinDataURL=null; headGroup=createDefaultSteveHead(); scene3d.add(headGroup);
             function animate(){ requestAnimationFrame(animate); if(headGroup){ headGroup.rotation.x=rotationX; headGroup.rotation.y=rotationY; headGroup.position.x=posX; headGroup.position.y=posY; } if(outlineMesh){ outlineMesh.rotation.x=rotationX; outlineMesh.rotation.y=rotationY; outlineMesh.position.x=posX; outlineMesh.position.y=posY; } if(pixelOutlineMesh && hatMesh && outlineMode==="pixelOutline"){ pixelOutlineMesh.rotation.x=rotationX; pixelOutlineMesh.rotation.y=rotationY; pixelOutlineMesh.position.x=posX; pixelOutlineMesh.position.y=posY; } if(window._bodyAnimHook) window._bodyAnimHook(); renderer.render(scene3d,camera); if(outlineMode==='stickerOutline' && (isDragging||stickerDirty)){ drawStickerOutline(); stickerDirty=false; } } animate();
@@ -4555,6 +4655,60 @@ hatBottom.map.rotation = Math.PI;
                 const filterCanvas = document.getElementById('filterToggleBtn') ? document.getElementById('skinCanvas') : null;
                 if(!filterCanvas) return;
 
+                // ── BG-Effect Canvas (behind skinCanvas) ──
+                const bgEffectCanvas = document.getElementById('bgEffectCanvas');
+                const bgEffectCtx = bgEffectCanvas ? bgEffectCanvas.getContext('2d') : null;
+
+                // BG-only state for each overlay/special effect (all OFF by default)
+                const bgOnlyState = {
+                    vignette:false, glow:false, scanline:false, noise:false, pixelate:false,
+                    unsharp:false, stainedGlass:false, wetEdge:false, parallelGrad:false,
+                    animeBg:false, mangaBg:false, bloom:false, sheerCross:false,
+                    expansion:false, blurFrame:false, rain:false
+                };
+
+                function hasBgOnlyActive(){
+                    return Object.values(bgOnlyState).some(v => v);
+                }
+
+                // Fill bgEffectCanvas with current bg color
+                function syncBgCanvas(){
+                    if(!bgEffectCanvas || !bgEffectCtx) return;
+                    const w = filterCanvas.width || filterCanvas.offsetWidth;
+                    const h = filterCanvas.height || filterCanvas.offsetHeight;
+                    if(bgEffectCanvas.width !== w || bgEffectCanvas.height !== h){
+                        bgEffectCanvas.width = w;
+                        bgEffectCanvas.height = h;
+                    }
+                    bgEffectCtx.clearRect(0,0,w,h);
+                    const col = window._mcGetBgColor ? window._mcGetBgColor() : '#ffffff';
+                    bgEffectCtx.fillStyle = col;
+                    bgEffectCtx.fillRect(0,0,w,h);
+                }
+
+                // Switch renderer transparent/opaque based on bgOnly usage
+                function updateRendererBgMode(){
+                    if(!window._mcRendererRef) return;
+                    if(hasBgOnlyActive()){
+                        window._mcRendererRef.setClearColor(0x000000, 0);
+                        if(bgEffectCanvas) bgEffectCanvas.style.display = 'block';
+                    } else {
+                        const col = window._mcGetBgColor ? window._mcGetBgColor() : '#ffffff';
+                        window._mcRendererRef.setClearColor(col, 1);
+                        if(bgEffectCanvas) bgEffectCanvas.style.display = 'none';
+                    }
+                }
+
+                // Hook: when bg color changes externally, resync bgCanvas
+                window._mcSetBgColorHook = function(color){
+                    if(!bgEffectCanvas || !bgEffectCtx) return;
+                    if(hasBgOnlyActive()){
+                        // renderer stays transparent; update bgCanvas fill
+                        syncBgCanvas();
+                        drawOverlay();
+                    }
+                };
+
                 // Filter State
                 const fState = {
                     brightness: 100, contrast: 100, saturate: 100,
@@ -4654,28 +4808,43 @@ hatBottom.map.rotation = Math.PI;
                     const ctx = overlayCanvas.getContext('2d');
                     ctx.clearRect(0,0,w,h);
 
+                    // If any bgOnly is active, prepare bgEffectCanvas
+                    if(hasBgOnlyActive()){
+                        syncBgCanvas();
+                    }
+                    // Helper: get the correct draw context and source for an effect
+                    // bgOnly=true → draw to bgEffectCtx, source is bgEffectCanvas
+                    // bgOnly=false → draw to ctx (overlayCanvas), source is filterCanvas
+                    function ctxFor(key){ return bgOnlyState[key] ? bgEffectCtx : ctx; }
+                    function srcFor(key){ return bgOnlyState[key] ? bgEffectCanvas : filterCanvas; }
+
                     // ── Pixelate ──
                     if(fState.pixelate && fState.pixelSize > 1){
                         const ps = fState.pixelSize;
+                        const dc = ctxFor('pixelate'), src = srcFor('pixelate');
+                        if(bgOnlyState.pixelate) syncBgCanvas(); // fresh fill first
                         const offscreen = document.createElement('canvas');
                         offscreen.width = Math.max(1, Math.floor(w/ps));
                         offscreen.height = Math.max(1, Math.floor(h/ps));
                         const octx = offscreen.getContext('2d');
-                        octx.drawImage(filterCanvas, 0,0, offscreen.width, offscreen.height);
-                        ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(offscreen, 0,0, w, h);
+                        octx.drawImage(src, 0,0, offscreen.width, offscreen.height);
+                        dc.imageSmoothingEnabled = false;
+                        dc.drawImage(offscreen, 0,0, w, h);
+                        if(bgOnlyState.pixelate) dc.imageSmoothingEnabled = true;
                     }
 
                     // ── Unsharp Mask (sharpen via subtract-blurred) ──
                     if(fState.unsharp){
+                        const dc = ctxFor('unsharp'), src = srcFor('unsharp');
+                        if(bgOnlyState.unsharp) syncBgCanvas();
                         const tmpC = document.createElement('canvas'); tmpC.width=w; tmpC.height=h;
                         const tc = tmpC.getContext('2d');
                         tc.filter = `blur(${fState.unsharpRadius}px)`;
-                        tc.drawImage(filterCanvas,0,0,w,h);
+                        tc.drawImage(src,0,0,w,h);
                         tc.filter='none';
                         const blurred = tc.getImageData(0,0,w,h);
-                        const sharp = (() => { const t2=document.createElement('canvas'); t2.width=w; t2.height=h; t2.getContext('2d').drawImage(filterCanvas,0,0,w,h); return t2.getContext('2d').getImageData(0,0,w,h); })();
-                        const out = ctx.createImageData(w,h);
+                        const sharp = (() => { const t2=document.createElement('canvas'); t2.width=w; t2.height=h; t2.getContext('2d').drawImage(src,0,0,w,h); return t2.getContext('2d').getImageData(0,0,w,h); })();
+                        const out = dc.createImageData(w,h);
                         const amt = fState.unsharpAmt;
                         for(let i=0;i<out.data.length;i+=4){
                             out.data[i]   = Math.min(255,Math.max(0, sharp.data[i]   + amt*(sharp.data[i]   - blurred.data[i])));
@@ -4683,14 +4852,16 @@ hatBottom.map.rotation = Math.PI;
                             out.data[i+2] = Math.min(255,Math.max(0, sharp.data[i+2] + amt*(sharp.data[i+2] - blurred.data[i+2])));
                             out.data[i+3] = 255;
                         }
-                        ctx.putImageData(out,0,0);
+                        dc.putImageData(out,0,0);
                     }
 
                     // ── Stained Glass ──
                     if(fState.stainedGlass){
                         const cs = fState.sgCellSize, bw = fState.sgBorder;
+                        const dc = ctxFor('stainedGlass'), src = srcFor('stainedGlass');
+                        if(bgOnlyState.stainedGlass) syncBgCanvas();
                         const tmpC = document.createElement('canvas'); tmpC.width=w; tmpC.height=h;
-                        const tc = tmpC.getContext('2d'); tc.drawImage(filterCanvas,0,0,w,h);
+                        const tc = tmpC.getContext('2d'); tc.drawImage(src,0,0,w,h);
                         const imgd = tc.getImageData(0,0,w,h);
                         // Sample each cell center → fill polygon
                         for(let gy=0; gy<h; gy+=cs){
@@ -4698,35 +4869,36 @@ hatBottom.map.rotation = Math.PI;
                                 const cx=Math.min(gx+cs/2,w-1)|0, cy=Math.min(gy+cs/2,h-1)|0;
                                 const idx=(cy*w+cx)*4;
                                 const r=imgd.data[idx],g=imgd.data[idx+1],b=imgd.data[idx+2];
-                                ctx.fillStyle=`rgb(${r},${g},${b})`;
-                                ctx.fillRect(gx,gy,cs,cs);
+                                dc.fillStyle=`rgb(${r},${g},${b})`;
+                                dc.fillRect(gx,gy,cs,cs);
                             }
                         }
                         // Black grid lines
-                        ctx.strokeStyle=`rgba(0,0,0,0.85)`; ctx.lineWidth=bw;
-                        for(let x=0;x<=w;x+=cs){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-                        for(let y=0;y<=h;y+=cs){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+                        dc.strokeStyle=`rgba(0,0,0,0.85)`; dc.lineWidth=bw;
+                        for(let x=0;x<=w;x+=cs){ dc.beginPath(); dc.moveTo(x,0); dc.lineTo(x,h); dc.stroke(); }
+                        for(let y=0;y<=h;y+=cs){ dc.beginPath(); dc.moveTo(0,y); dc.lineTo(w,y); dc.stroke(); }
                         // Highlight edge (glass bevel)
-                        ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
-                        for(let x=0;x<=w;x+=cs){ ctx.beginPath(); ctx.moveTo(x+1,0); ctx.lineTo(x+1,h); ctx.stroke(); }
-                        for(let y=0;y<=h;y+=cs){ ctx.beginPath(); ctx.moveTo(0,y+1); ctx.lineTo(w,y+1); ctx.stroke(); }
+                        dc.strokeStyle='rgba(255,255,255,0.18)'; dc.lineWidth=1;
+                        for(let x=0;x<=w;x+=cs){ dc.beginPath(); dc.moveTo(x+1,0); dc.lineTo(x+1,h); dc.stroke(); }
+                        for(let y=0;y<=h;y+=cs){ dc.beginPath(); dc.moveTo(0,y+1); dc.lineTo(w,y+1); dc.stroke(); }
                     }
 
                     // ── Wet Edge (dark watercolor-style edges) ──
                     if(fState.wetEdge){
                         const amt = fState.wetEdgeAmt;
+                        const dc = ctxFor('wetEdge');
                         // Multi-layer radial dark fringe
-                        const g1 = ctx.createRadialGradient(w*0.5,h*0.5, w*0.25, w*0.5,h*0.5, w*0.72);
+                        const g1 = dc.createRadialGradient(w*0.5,h*0.5, w*0.25, w*0.5,h*0.5, w*0.72);
                         g1.addColorStop(0,'rgba(0,0,0,0)');
                         g1.addColorStop(0.7,`rgba(0,0,0,${amt*0.4})`);
                         g1.addColorStop(1,`rgba(20,10,5,${amt*0.85})`);
-                        ctx.fillStyle=g1; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle=g1; dc.fillRect(0,0,w,h);
                         // Corner darkening
                         [[0,0],[w,0],[0,h],[w,h]].forEach(([cx,cy])=>{
-                            const gc=ctx.createRadialGradient(cx,cy,0,cx,cy,w*0.55);
+                            const gc=dc.createRadialGradient(cx,cy,0,cx,cy,w*0.55);
                             gc.addColorStop(0,`rgba(10,5,0,${amt*0.5})`);
                             gc.addColorStop(1,'rgba(0,0,0,0)');
-                            ctx.fillStyle=gc; ctx.fillRect(0,0,w,h);
+                            dc.fillStyle=gc; dc.fillRect(0,0,w,h);
                         });
                     }
 
@@ -4734,45 +4906,46 @@ hatBottom.map.rotation = Math.PI;
                     if(fState.parallelGrad){
                         const n=fState.pgBands, ang=fState.pgAngle*Math.PI/180;
                         const ca=fState.pgColorA, cb=fState.pgColorB, op=fState.pgOpacity;
-                        ctx.save();
-                        ctx.translate(w/2,h/2); ctx.rotate(ang);
+                        const dc = ctxFor('parallelGrad');
+                        dc.save();
+                        dc.translate(w/2,h/2); dc.rotate(ang);
                         const diag=Math.sqrt(w*w+h*h);
                         const bandH=diag/n;
                         for(let i=0;i<n;i++){
-                            const t=i/n, t2=(i+1)/n;
-                            const grad=ctx.createLinearGradient(0,-diag/2+i*bandH,0,-diag/2+(i+1)*bandH);
+                            const grad=dc.createLinearGradient(0,-diag/2+i*bandH,0,-diag/2+(i+1)*bandH);
                             const col = (i%2===0) ? ca : cb;
                             const nextCol = (i%2===0) ? cb : ca;
                             grad.addColorStop(0,col); grad.addColorStop(1,nextCol);
-                            ctx.fillStyle=grad; ctx.globalAlpha=op;
-                            ctx.fillRect(-diag,-diag/2+i*bandH,diag*2,bandH);
+                            dc.fillStyle=grad; dc.globalAlpha=op;
+                            dc.fillRect(-diag,-diag/2+i*bandH,diag*2,bandH);
                         }
-                        ctx.restore(); ctx.globalAlpha=1;
+                        dc.restore(); dc.globalAlpha=1;
                     }
 
                     // ── Anime Background (burst rays + soft bg) ──
                     if(fState.animeBg){
                         const rays=fState.abRays, col=fState.abColor, op=fState.abOpacity;
                         const rgb=hexToRgbArr(col);
+                        const dc = ctxFor('animeBg');
                         // Soft background fill
-                        ctx.fillStyle=`rgba(${rgb},${op*0.4})`; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle=`rgba(${rgb},${op*0.4})`; dc.fillRect(0,0,w,h);
                         // Radial burst rays
                         const cx2=w/2, cy2=h/2;
                         const rayW=Math.PI*2/rays;
                         const diag=Math.sqrt(w*w+h*h);
                         for(let i=0;i<rays;i++){
                             const a1=i*rayW, a2=a1+rayW*0.55;
-                            ctx.beginPath();
-                            ctx.moveTo(cx2,cy2);
-                            ctx.arc(cx2,cy2,diag,a1,a2);
-                            ctx.closePath();
-                            ctx.fillStyle=`rgba(${rgb},${op*0.55})`; ctx.fill();
+                            dc.beginPath();
+                            dc.moveTo(cx2,cy2);
+                            dc.arc(cx2,cy2,diag,a1,a2);
+                            dc.closePath();
+                            dc.fillStyle=`rgba(${rgb},${op*0.55})`; dc.fill();
                         }
                         // Center bright circle
-                        const cg=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,w*0.35);
+                        const cg=dc.createRadialGradient(cx2,cy2,0,cx2,cy2,w*0.35);
                         cg.addColorStop(0,`rgba(255,255,255,${op*0.6})`);
                         cg.addColorStop(1,`rgba(255,255,255,0)`);
-                        ctx.fillStyle=cg; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle=cg; dc.fillRect(0,0,w,h);
                     }
 
                     // ── Manga Background (speed/action lines) ──
@@ -4780,37 +4953,40 @@ hatBottom.map.rotation = Math.PI;
                         const n=fState.mbDensity*6, op=fState.mbOpacity;
                         const cx2=w/2, cy2=h/2;
                         const diag=Math.sqrt(w*w+h*h);
-                        ctx.save(); ctx.strokeStyle=`rgba(0,0,0,${op})`; ctx.lineWidth=1;
+                        const dc = ctxFor('mangaBg');
+                        dc.save(); dc.strokeStyle=`rgba(0,0,0,${op})`; dc.lineWidth=1;
                         for(let i=0;i<n;i++){
                             const angle=(i/n)*Math.PI*2;
                             const jitter=(Math.random()-0.5)*0.05;
-                            ctx.beginPath();
-                            ctx.moveTo(cx2+Math.cos(angle+jitter)*8, cy2+Math.sin(angle+jitter)*8);
-                            ctx.lineTo(cx2+Math.cos(angle)*diag, cy2+Math.sin(angle)*diag);
-                            ctx.stroke();
+                            dc.beginPath();
+                            dc.moveTo(cx2+Math.cos(angle+jitter)*8, cy2+Math.sin(angle+jitter)*8);
+                            dc.lineTo(cx2+Math.cos(angle)*diag, cy2+Math.sin(angle)*diag);
+                            dc.stroke();
                         }
-                        ctx.restore();
+                        dc.restore();
                         // White center flash
-                        const fl=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,w*0.22);
+                        const fl=dc.createRadialGradient(cx2,cy2,0,cx2,cy2,w*0.22);
                         fl.addColorStop(0,'rgba(255,255,255,0.9)');
                         fl.addColorStop(1,'rgba(255,255,255,0)');
-                        ctx.fillStyle=fl; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle=fl; dc.fillRect(0,0,w,h);
                     }
 
                     // ── Bloom ──
                     if(fState.bloom){
+                        const dc = ctxFor('bloom'), src = srcFor('bloom');
                         const tmpC=document.createElement('canvas'); tmpC.width=w; tmpC.height=h;
                         const tc=tmpC.getContext('2d');
                         const blurPx=Math.max(1,Math.round(fState.bloomRadius*30));
                         tc.filter=`blur(${blurPx}px) brightness(1.4)`;
-                        tc.drawImage(filterCanvas,0,0,w,h);
-                        ctx.globalAlpha=fState.bloomStrength; ctx.globalCompositeOperation='lighter';
-                        ctx.drawImage(tmpC,0,0,w,h);
-                        ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+                        tc.drawImage(src,0,0,w,h);
+                        dc.globalAlpha=fState.bloomStrength; dc.globalCompositeOperation='lighter';
+                        dc.drawImage(tmpC,0,0,w,h);
+                        dc.globalAlpha=1; dc.globalCompositeOperation='source-over';
                     }
 
                     // ── Sheer Cross (lens cross / star streak) ──
                     if(fState.sheerCross){
+                        const dc = ctxFor('sheerCross');
                         const len=fState.scLength, op=fState.scOpacity, col=fState.scColor;
                         const rgb=hexToRgbArr(col);
                         const cx2=w/2, cy2=h/2;
@@ -4818,82 +4994,78 @@ hatBottom.map.rotation = Math.PI;
                         // 4 directions + 4 diagonal = 8 streaks
                         const angles=[0, Math.PI/2, Math.PI, Math.PI*1.5, Math.PI/4, Math.PI*0.75, Math.PI*1.25, Math.PI*1.75];
                         angles.forEach(ang=>{
-                            const grad=ctx.createLinearGradient(
+                            const grad=dc.createLinearGradient(
                                 cx2,cy2,
                                 cx2+Math.cos(ang)*maxLen, cy2+Math.sin(ang)*maxLen
                             );
                             grad.addColorStop(0,`rgba(${rgb},${op})`);
                             grad.addColorStop(0.5,`rgba(${rgb},${op*0.3})`);
                             grad.addColorStop(1,`rgba(${rgb},0)`);
-                            ctx.save();
-                            ctx.globalCompositeOperation='lighter';
+                            dc.save();
+                            dc.globalCompositeOperation='lighter';
                             const lw=Math.max(1,w*0.012);
-                            ctx.strokeStyle=grad; ctx.lineWidth=lw;
-                            ctx.beginPath(); ctx.moveTo(cx2,cy2);
-                            ctx.lineTo(cx2+Math.cos(ang)*maxLen, cy2+Math.sin(ang)*maxLen);
-                            ctx.stroke(); ctx.restore();
+                            dc.strokeStyle=grad; dc.lineWidth=lw;
+                            dc.beginPath(); dc.moveTo(cx2,cy2);
+                            dc.lineTo(cx2+Math.cos(ang)*maxLen, cy2+Math.sin(ang)*maxLen);
+                            dc.stroke(); dc.restore();
                         });
                     }
 
                     // ── Vignette ──
                     if(fState.vignette){
-                        const grad = ctx.createRadialGradient(w/2,h/2, w*fState.vigSize*0.3, w/2,h/2, w*0.75);
+                        const dc = ctxFor('vignette');
+                        const grad = dc.createRadialGradient(w/2,h/2, w*fState.vigSize*0.3, w/2,h/2, w*0.75);
                         const vigRgb = hexToRgbArr(fState.vigColor);
                         grad.addColorStop(0, `rgba(${vigRgb},0)`);
                         grad.addColorStop(1, `rgba(${vigRgb},0.85)`);
-                        ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle = grad; dc.fillRect(0,0,w,h);
                     }
 
                     // ── Glow ──
                     if(fState.glow){
-                        const ggrad = ctx.createRadialGradient(w/2,h/2, 0, w/2,h/2, w*fState.glowSize*0.8);
+                        const dc = ctxFor('glow');
+                        const ggrad = dc.createRadialGradient(w/2,h/2, 0, w/2,h/2, w*fState.glowSize*0.8);
                         const glRgb = hexToRgbArr(fState.glowColor);
                         ggrad.addColorStop(0, `rgba(${glRgb},0.45)`);
                         ggrad.addColorStop(1, `rgba(${glRgb},0)`);
-                        ctx.fillStyle = ggrad; ctx.fillRect(0,0,w,h);
+                        dc.fillStyle = ggrad; dc.fillRect(0,0,w,h);
                     }
 
                     // ── Blur Frame ──
                     if(fState.blurFrame){
+                        const dc = ctxFor('blurFrame'), src = srcFor('blurFrame');
                         const bfw=fState.bfWidth, bfb=fState.bfBlur;
                         const pw=w*bfw, ph=h*bfw;
-                        // Draw blurred source at edges
                         const tmpC=document.createElement('canvas'); tmpC.width=w; tmpC.height=h;
                         const tc=tmpC.getContext('2d');
                         tc.filter=`blur(${bfb}px)`;
-                        tc.drawImage(filterCanvas,0,0,w,h);
-                        // Mask: only show outer frame band (use destination-in with inner-clear rect)
-                        const maskC=document.createElement('canvas'); maskC.width=w; maskC.height=h;
-                        const mc=maskC.getContext('2d');
-                        mc.fillStyle='black'; mc.fillRect(0,0,w,h);
-                        mc.clearRect(pw,ph,w-pw*2,h-ph*2);
-                        // Composite blurred onto overlay only in frame area
-                        ctx.save();
-                        ctx.drawImage(tmpC,0,0,w,h);
-                        // Mask out center so blur only shows on edges
-                        ctx.clearRect(pw,ph,w-pw*2,h-ph*2);
-                        ctx.restore();
-                        // Smooth blend between clear center & blurred edge
-                        const topG=ctx.createLinearGradient(0,0,0,ph*2);
+                        tc.drawImage(src,0,0,w,h);
+                        dc.save();
+                        dc.drawImage(tmpC,0,0,w,h);
+                        dc.clearRect(pw,ph,w-pw*2,h-ph*2);
+                        dc.restore();
+                        const topG=dc.createLinearGradient(0,0,0,ph*2);
                         topG.addColorStop(0,'rgba(0,0,0,0)'); topG.addColorStop(1,'rgba(0,0,0,0)');
-                        ctx.fillStyle=topG; ctx.fillRect(0,0,w,ph*2);
+                        dc.fillStyle=topG; dc.fillRect(0,0,w,ph*2);
                     }
 
                     // ── Scanlines ──
                     if(fState.scanline){
-                        ctx.fillStyle = `rgba(0,0,0,${fState.scanOpacity})`;
-                        for(let y=0; y<h; y+=4){ ctx.fillRect(0,y,w,2); }
+                        const dc = ctxFor('scanline');
+                        dc.fillStyle = `rgba(0,0,0,${fState.scanOpacity})`;
+                        for(let y=0; y<h; y+=4){ dc.fillRect(0,y,w,2); }
                     }
 
                     // ── Film Noise ──
                     if(fState.noise){
-                        const imageData = ctx.createImageData(w, h);
+                        const dc = ctxFor('noise');
+                        const imageData = dc.createImageData(w, h);
                         for(let i=0;i<imageData.data.length;i+=4){
                             const v = Math.random()*80-40;
                             imageData.data[i]=128+v; imageData.data[i+1]=128+v; imageData.data[i+2]=128+v;
                             imageData.data[i+3]=30;
                         }
-                        ctx.putImageData(imageData,0,0);
+                        dc.putImageData(imageData,0,0);
                     }
                 }
 
@@ -4903,10 +5075,10 @@ hatBottom.map.rotation = Math.PI;
                     const w=overlayCanvas.width||filterCanvas.offsetWidth;
                     const h=overlayCanvas.height||filterCanvas.offsetHeight;
                     if(overlayCanvas.width!==w){ overlayCanvas.width=w; overlayCanvas.height=h; }
-                    const ctx=overlayCanvas.getContext('2d');
                     // Draw base overlay first
                     drawOverlay();
-                    // Then draw expansion rings on top
+                    // Pick target canvas for rings
+                    const dc = bgOnlyState.expansion ? bgEffectCtx : overlayCanvas.getContext('2d');
                     const cx2=w/2, cy2=h/2;
                     const maxR=Math.sqrt(w*w+h*h)*0.65;
                     const rgb=hexToRgbArr(fState.expColor);
@@ -4916,11 +5088,11 @@ hatBottom.map.rotation = Math.PI;
                         const t=((fState._expPhase+i*0.25)%1);
                         const r=t*maxR;
                         const alpha=op*(1-t);
-                        ctx.beginPath();
-                        ctx.arc(cx2,cy2,r,0,Math.PI*2);
-                        ctx.strokeStyle=`rgba(${rgb},${alpha})`;
-                        ctx.lineWidth=Math.max(1,3*(1-t));
-                        ctx.stroke();
+                        dc.beginPath();
+                        dc.arc(cx2,cy2,r,0,Math.PI*2);
+                        dc.strokeStyle=`rgba(${rgb},${alpha})`;
+                        dc.lineWidth=Math.max(1,3*(1-t));
+                        dc.stroke();
                     }
                     expansionAnim=requestAnimationFrame(drawExpansion);
                 }
@@ -4943,21 +5115,21 @@ hatBottom.map.rotation = Math.PI;
                     if(!overlayCanvas || !fState.rain) return;
                     const w=filterCanvas.offsetWidth, h=filterCanvas.offsetHeight;
                     if(overlayCanvas.width!==w){ overlayCanvas.width=w; overlayCanvas.height=h; initRain(w,h); }
-                    const ctx=overlayCanvas.getContext('2d');
                     drawOverlay();
+                    const dc = bgOnlyState.rain ? bgEffectCtx : overlayCanvas.getContext('2d');
                     const rgb=hexToRgbArr(fState.rainColor);
                     const baseOp=fState.rainOpacity;
                     fState._rainDrops.forEach(d=>{
                         d.y+=d.speed;
                         if(d.y>h+d.len){ d.y=-d.len; d.x=Math.random()*w; }
-                        const grad=ctx.createLinearGradient(d.x,d.y-d.len,d.x+d.len*0.2,d.y);
+                        const grad=dc.createLinearGradient(d.x,d.y-d.len,d.x+d.len*0.2,d.y);
                         grad.addColorStop(0,`rgba(${rgb},0)`);
                         grad.addColorStop(1,`rgba(${rgb},${d.opacity*baseOp})`);
-                        ctx.beginPath();
-                        ctx.moveTo(d.x,d.y-d.len);
-                        ctx.lineTo(d.x+d.len*0.2,d.y);
-                        ctx.strokeStyle=grad;
-                        ctx.lineWidth=1.2; ctx.stroke();
+                        dc.beginPath();
+                        dc.moveTo(d.x,d.y-d.len);
+                        dc.lineTo(d.x+d.len*0.2,d.y);
+                        dc.strokeStyle=grad;
+                        dc.lineWidth=1.2; dc.stroke();
                     });
                     rainAnim=requestAnimationFrame(drawRain);
                 }
@@ -5107,6 +5279,40 @@ hatBottom.map.rotation = Math.PI;
                 bindColor('fSCColor','fSCColorVal','scColor');
                 bindColor('fExpColor','fExpColorVal','expColor');
                 bindColor('fRainColor','fRainColorVal','rainColor');
+
+                // ── BG-Only Toggle Bindings ──
+                // Maps: [toggleBtnId, bgOnlyStateKey]
+                const BG_ONLY_MAP = [
+                    ['fVignetteBgOnly',    'vignette'],
+                    ['fGlowBgOnly',        'glow'],
+                    ['fScanlineBgOnly',    'scanline'],
+                    ['fNoiseBgOnly',       'noise'],
+                    ['fPixelBgOnly',       'pixelate'],
+                    ['fUnsharpBgOnly',     'unsharp'],
+                    ['fStainedGlassBgOnly','stainedGlass'],
+                    ['fWetEdgeBgOnly',     'wetEdge'],
+                    ['fParallelGradBgOnly','parallelGrad'],
+                    ['fAnimeBgBgOnly',     'animeBg'],
+                    ['fMangaBgBgOnly',     'mangaBg'],
+                    ['fBloomBgOnly',       'bloom'],
+                    ['fSheerCrossBgOnly',  'sheerCross'],
+                    ['fExpansionBgOnly',   'expansion'],
+                    ['fBlurFrameBgOnly',   'blurFrame'],
+                    ['fRainBgOnly',        'rain'],
+                ];
+                BG_ONLY_MAP.forEach(([btnId, key]) => {
+                    const btn = document.getElementById(btnId);
+                    if(!btn) return;
+                    btn.addEventListener('click', () => {
+                        bgOnlyState[key] = !bgOnlyState[key];
+                        btn.classList.toggle('on', bgOnlyState[key]);
+                        // Update renderer transparency based on any active bgOnly
+                        updateRendererBgMode();
+                        // Sync bg canvas and redraw
+                        if(hasBgOnlyActive()) syncBgCanvas();
+                        applyFilter();
+                    });
+                });
 
                 // Preset buttons
                 document.querySelectorAll('.filter-preset-btn').forEach(btn=>{
